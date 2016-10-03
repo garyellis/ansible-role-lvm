@@ -1,0 +1,8 @@
+---
+boxes:
+- box: ubuntu/trusty64
+  hostname: lvm
+  ip: 192.168.128.205
+  cpus: 2
+  memory: 2048
+  ansible_playbook: tests/playbook.yml

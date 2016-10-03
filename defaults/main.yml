@@ -1,0 +1,11 @@
+---
+volumes:
+- pvs_vol: /dev/xvdb
+  vg_name: vgopt
+  lv_name: lvopt
+  mount_path: /opt
+  mount_opts: defaults,noatime,nobarrier
+  lv_size: "+100%FREE"
+  fstype: ext4
+
+ansible_2_patch: false

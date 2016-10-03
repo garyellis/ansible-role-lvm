@@ -1,0 +1,15 @@
+---
+# https://github.com/ansible/ansible-modules-extras/issues/428
+ - name: find lvol.py path
+   shell: find $(python -c 'import sys; print " ".join(sys.path)') -name lvol.py 2>/dev/null || echo
+   register: lvol_module_path
+   connection: local
+   become: false
+   when: ansible_version.major == 2 and ansible_version.minor < 2
+
+ - name: patch ansible 2.x < 2.2 lvol
+   get_url: url=https://raw.githubusercontent.com/ansible/ansible-modules-extras/devel/system/lvol.py
+            dest={{ lvol_module_path.stdout }}
+   connection: local
+   become: true
+   when: ansible_version.major == 2 and ansible_version.minor < 2

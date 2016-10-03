@@ -1,0 +1,27 @@
+---
+
+ - name: install and configure lvm
+   hosts: all
+   vars:
+     volumes:
+     - pvs_vol: /dev/sdb,/dev/sdc
+       vg_name: vgopt
+       lv_name: lvopt
+       mount_path: /opt
+       mount_opts: defaults,noatime,nobarrier
+       lv_size: "+100%FREE"
+       fstype: ext4
+     - pvs_vol: /dev/sdd
+       vg_name: vgfoo
+       lv_name: lvfoo
+       mount_path: /opt/foo
+       mount_opts: defaults,noatime,nobarrier
+       lv_size: "+100%FREE"
+       fstype: ext4
+   pre_tasks:
+   - name: create a directory for mounting a filesystem
+     file: path=/opt/foo
+           state=directory
+           mode=0755
+   roles:
+   - ../..

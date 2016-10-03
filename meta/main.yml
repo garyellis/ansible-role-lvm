@@ -1,0 +1,13 @@
+---
+galaxy_info:
+  author: Gary Ellis
+  description: Manage volumes with lvm
+  license: MIT
+  min_ansible_version: 2.x
+  platforms:
+  - name: Ubuntu
+    versions:
+    - trusty
+  galaxy_tags:
+  - system
+dependencies: []

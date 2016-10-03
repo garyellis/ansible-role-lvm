@@ -1,0 +1,85 @@
+---
+
+ - name: update apt cache
+   apt: update_cache=yes
+        cache_valid_time=900
+   tags: install_lvm
+
+ - name: install lvm
+   apt: name=lvm2
+        state=installed
+   tags: install_lvm
+
+ - name: include ansible 2.x lvm module patch
+   include: ansible2-patch.yml
+   when: ansible_version.major == 2 and ansible_version.minor < 2 and ansible_2_patch
+   tags: install_lvm
+
+ - name: register attached devices
+   shell: >
+       lsblk | awk '/^[a-z]/ {print "/dev/"$1}'
+   register: lsblk_devices
+   changed_when: false
+   tags: configure_lvm
+   
+
+# - name: set  attached devices fact
+#   set_fact:
+#     devices: "{{ lsblk_devices.stdout.split('\n') }}"
+#   tags: configure_lvm
+
+ - name: register existing physical volumes
+   shell: >
+       pvs| awk '/\/dev/ {print $1}'
+   register: pvs_devices
+   changed_when: false
+   tags: configure_lvm
+
+ - name: set physical volumes fact
+   set_fact:
+     pvs_volumes: "{{ pvs_devices.stdout.split('\n') }}"
+   tags: configure_lvm
+
+ - name: set existing mounts fact
+   set_fact:
+     mounts: "{{ ansible_mounts | map(attribute='mount') | list }}"
+   tags: configure_lvm
+
+ # pvresize runs on any already existing physical volumes which is not ideal
+ - name: pvresize volumes
+   command: pvresize {{ item }}
+   with_items: pvs_volumes
+   when: item != ""
+   tags: configure_lvm
+
+ - name: create volume group
+   lvg:  vg={{ item.vg_name }}
+         pvs={{ item.pvs_vol }}
+   with_items: volumes
+#   when: item.pvs_vol in devices
+   tags: configure_lvm
+
+ - name: create logical volume
+   lvol: vg={{ item.vg_name }}
+         lv={{ item.lv_name }}
+         size={{ item.lv_size }}
+   with_items: volumes
+   tags: configure_lvm
+
+ - name: create filesystem
+   filesystem: fstype={{ item.fstype }}
+               dev=/dev/{{ item.vg_name }}/{{ item.lv_name }}
+               resizefs=yes
+   with_items: volumes
+#   when: item.pvs_vol in devices
+   tags: configure_lvm
+
+ - name: mount filesystem
+   mount: name={{ item.mount_path }}
+          src=/dev/{{ item.vg_name }}/{{ item.lv_name }}
+          fstype={{ item.fstype }}
+          state=mounted
+          opts={{ item.mount_opts }}
+   with_items: volumes
+#   when: item.pvs_vol in devices
+   tags: configure_lvm
